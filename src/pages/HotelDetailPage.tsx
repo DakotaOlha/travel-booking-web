@@ -7,7 +7,6 @@ import { z } from 'zod';
 import { hotelsApi } from '../api/hotels';
 import { bookingsApi } from '../api/bookings';
 import { travelsApi } from '../api/travels';
-import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
@@ -15,9 +14,9 @@ import { Badge } from '../components/ui/Badge';
 import type { Room } from '../types';
 
 const bookingSchema = z.object({
-  checkInDate: z.string().min(1),
-  checkOutDate: z.string().min(1),
-  guestsCount: z.number().min(1),
+  checkInDate: z.string().min(1, 'Вкажіть дату заїзду'),
+  checkOutDate: z.string().min(1, 'Вкажіть дату виїзду'),
+  guestsCount: z.number({ invalid_type_error: 'Вкажіть кількість' }).min(1),
   travelId: z.string().optional(),
   specialRequests: z.string().optional(),
 });
@@ -38,6 +37,7 @@ export function HotelDetailPage() {
     queryKey: ['hotel', id],
     queryFn: () => hotelsApi.getOne(id!),
   });
+
   const { data: travels } = useQuery({
     queryKey: ['travels'],
     queryFn: travelsApi.getAll,
@@ -48,9 +48,11 @@ export function HotelDetailPage() {
     defaultValues: { guestsCount: 1 },
   });
 
-  const mutation = useMutation({
+  const bookingMutation = useMutation({
     mutationFn: (data: BookingForm) => bookingsApi.create({
       ...data,
+      checkInDate: new Date(data.checkInDate).toISOString(),
+      checkOutDate: new Date(data.checkOutDate).toISOString(),
       hotelId: id!,
       roomId: selectedRoom!.id,
     }),
@@ -63,78 +65,115 @@ export function HotelDetailPage() {
     },
   });
 
-  if (isLoading) return <div className="text-center py-12 text-gray-400">Завантаження...</div>;
-  if (!hotel) return <div className="text-center py-12 text-red-400">Готель не знайдено</div>;
+  const handleCloseModal = () => {
+    setSelectedRoom(null);
+    reset();
+  };
+
+  if (isLoading) return (
+    <div className="flex items-center justify-center py-24">
+      <div className="w-6 h-6 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+  if (!hotel) return <div className="text-center py-16 text-slate-400">Готель не знайдено</div>;
 
   return (
     <div className="space-y-6">
-      <button onClick={() => navigate(-1)} className="text-sm text-gray-500 hover:text-gray-700">← Назад</button>
+      <button onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors">
+        ← Назад до готелів
+      </button>
 
-      <Card>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{hotel.name}</h1>
-            <p className="text-gray-500 mt-1">📍 {hotel.location} · {hotel.address}</p>
-            {hotel.description && <p className="text-gray-600 mt-2">{hotel.description}</p>}
+      {/* Hotel header */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-br from-sky-500 to-sky-400 px-8 py-8 text-white">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold">{hotel.name}</h1>
+              <p className="text-sky-100 mt-1 text-sm">{hotel.location} · {hotel.address}</p>
+              {hotel.description && <p className="text-sky-50 mt-3 text-sm max-w-lg">{hotel.description}</p>}
+            </div>
+            {hotel.rating && (
+              <div className="bg-white/20 backdrop-blur rounded-xl px-4 py-2 text-center">
+                <p className="text-2xl font-bold">{hotel.rating}</p>
+                <p className="text-xs text-sky-100">рейтинг</p>
+              </div>
+            )}
           </div>
-          {hotel.rating && (
-            <div className="text-2xl font-bold text-amber-500">⭐ {hotel.rating}</div>
-          )}
         </div>
         {hotel.amenities?.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-4">
+          <div className="px-8 py-4 flex flex-wrap gap-2">
             {hotel.amenities.map((a) => (
-              <span key={a} className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-full">{a}</span>
+              <span key={a} className="text-sm bg-sky-50 text-sky-600 border border-sky-100 px-3 py-1 rounded-full">{a}</span>
             ))}
           </div>
         )}
-      </Card>
+      </div>
 
-      <h2 className="text-xl font-semibold">🛏 Кімнати</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {hotel.rooms?.map((room) => (
-          <Card key={room.id}>
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <h3 className="font-semibold">{roomTypeLabels[room.roomType]}</h3>
-                <p className="text-sm text-gray-500">👥 До {room.capacity} гостей</p>
+      {/* Rooms */}
+      <div>
+        <h2 className="text-lg font-semibold text-slate-700 mb-4">Доступні кімнати</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {hotel.rooms?.map((room) => (
+            <div key={room.id}
+              className={`bg-white rounded-xl border shadow-sm p-5 transition-all ${room.available ? 'border-slate-100 hover:border-sky-200 hover:shadow-md' : 'border-slate-100 opacity-60'
+                }`}>
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h3 className="font-bold text-slate-800">{roomTypeLabels[room.roomType]}</h3>
+                  <p className="text-sm text-slate-400 mt-0.5">до {room.capacity} гостей</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-sky-600 text-lg">{room.pricePerNight.toLocaleString('uk')} ₴</p>
+                  <p className="text-xs text-slate-400">за ніч</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-bold text-blue-600">{room.pricePerNight} ₴/ніч</p>
+              {room.description && (
+                <p className="text-sm text-slate-500 mb-4">{room.description}</p>
+              )}
+              <div className="flex items-center justify-between">
                 <Badge color={room.available ? 'green' : 'red'}>
                   {room.available ? 'Вільна' : 'Зайнята'}
                 </Badge>
+                <Button
+                  size="sm"
+                  disabled={!room.available}
+                  onClick={() => setSelectedRoom(room)}
+                >
+                  Забронювати
+                </Button>
               </div>
             </div>
-            {room.description && <p className="text-sm text-gray-600 mb-3">{room.description}</p>}
-            <Button
-              size="sm"
-              disabled={!room.available}
-              onClick={() => setSelectedRoom(room)}
-            >
-              Забронювати
-            </Button>
-          </Card>
-        ))}
+          ))}
+        </div>
       </div>
 
-      {/* Модалка бронювання */}
-      <Modal open={!!selectedRoom} onClose={() => setSelectedRoom(null)} title="Нове бронювання">
+      {/* Booking modal */}
+      <Modal open={!!selectedRoom} onClose={handleCloseModal} title="Нове бронювання">
         {selectedRoom && (
-          <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-4">
-            <div className="p-3 bg-blue-50 rounded-lg text-sm">
-              <strong>{roomTypeLabels[selectedRoom.roomType]}</strong> · {selectedRoom.pricePerNight} ₴/ніч
+          <form onSubmit={handleSubmit((data) => bookingMutation.mutate(data))} className="space-y-4">
+            <div className="bg-sky-50 border border-sky-100 rounded-xl p-4">
+              <p className="font-semibold text-sky-800">{roomTypeLabels[selectedRoom.roomType]}</p>
+              <p className="text-sm text-sky-600 mt-0.5">{selectedRoom.pricePerNight.toLocaleString('uk')} ₴ за ніч · до {selectedRoom.capacity} гостей</p>
             </div>
+
             <div className="grid grid-cols-2 gap-3">
-              <Input label="Дата заїзду" type="date" error={errors.checkInDate?.message} {...register('checkInDate')} />
-              <Input label="Дата виїзду" type="date" error={errors.checkOutDate?.message} {...register('checkOutDate')} />
+              <Input label="Дата заїзду" type="date"
+                error={errors.checkInDate?.message} {...register('checkInDate')} />
+              <Input label="Дата виїзду" type="date"
+                error={errors.checkOutDate?.message} {...register('checkOutDate')} />
             </div>
-            <Input label="Кількість гостей" type="number" min={1} max={selectedRoom.capacity}
-              error={errors.guestsCount?.message} {...register('guestsCount', { valueAsNumber: true })} />
+
+            <Input label="Кількість гостей" type="number"
+              min={1} max={selectedRoom.capacity}
+              error={errors.guestsCount?.message}
+              {...register('guestsCount', { valueAsNumber: true })} />
+
             {travels && travels.length > 0 && (
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">Прив'язати до подорожі (необов'язково)</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" {...register('travelId')}>
+                <label className="text-sm font-medium text-slate-600">Прив'язати до подорожі</label>
+                <select className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-400"
+                  {...register('travelId')}>
                   <option value="">Без подорожі</option>
                   {travels.map((t) => (
                     <option key={t.id} value={t.id}>{t.destination}</option>
@@ -142,13 +181,20 @@ export function HotelDetailPage() {
                 </select>
               </div>
             )}
-            <Input label="Особливі побажання" placeholder="Необов'язково..." {...register('specialRequests')} />
-            {mutation.isError && (
-              <p className="text-red-500 text-sm">Помилка бронювання. Перевірте дані.</p>
+
+            <Input label="Побажання (необов'язково)"
+              placeholder="Наприклад: тихий номер, ранній заїзд..."
+              {...register('specialRequests')} />
+
+            {bookingMutation.isError && (
+              <p className="text-red-500 text-sm">Помилка бронювання. Перевірте дати та кількість гостей.</p>
             )}
+
             <div className="flex gap-3 pt-2">
-              <Button type="submit" loading={mutation.isPending} className="flex-1">Підтвердити</Button>
-              <Button type="button" variant="ghost" onClick={() => setSelectedRoom(null)}>Скасувати</Button>
+              <Button type="submit" loading={bookingMutation.isPending} className="flex-1">
+                Підтвердити бронювання
+              </Button>
+              <Button type="button" variant="ghost" onClick={handleCloseModal}>Скасувати</Button>
             </div>
           </form>
         )}

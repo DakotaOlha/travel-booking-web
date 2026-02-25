@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel Booking — Data Seeder</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3e;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --success: #43e97b;
+    --error: #ff6584;
+    --warning: #ffd166;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* Grid noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(108,99,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(108,99,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 48px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* API Config */
+  .config-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 16px;
+  }
+
+  .config-bar label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .config-bar input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.82rem;
+  }
+
+  /* Stats bar */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+
+  .stat-card.active { border-color: var(--accent); }
+
+  .stat-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Main layout */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* Sections */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  .section-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+  }
+
+  .icon-purple { background: rgba(108,99,255,0.2); }
+  .icon-pink { background: rgba(255,101,132,0.2); }
+  .icon-green { background: rgba(67,233,123,0.2); }
+  .icon-yellow { background: rgba(255,209,102,0.2); }
+  .icon-blue { background: rgba(56,189,248,0.2); }
+
+  .section-body { padding: 20px; }
+
+  /* Form elements */
+  .field-group {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+
+  label.field-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  input, select, textarea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.88rem;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+  }
+
+  select option { background: var(--surface); }
+  textarea { resize: vertical; min-height: 70px; }
+
+  /* Tags input */
+  .tags-container {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 42px;
+    cursor: text;
+  }
+
+  .tags-container:focus-within { border-color: var(--accent); }
+
+  .tag {
+    background: rgba(108,99,255,0.2);
+    color: var(--accent);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.78rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .tag-remove {
+    cursor: pointer;
+    opacity: 0.6;
+    font-size: 14px;
+    line-height: 1;
+  }
+  .tag-remove:hover { opacity: 1; }
+
+  .tags-input {
+    border: none !important;
+    background: transparent !important;
+    padding: 2px 4px !important;
+    min-width: 80px;
+    flex: 1;
+    font-size: 0.82rem;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #8b83ff);
+    color: white;
+  }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(108,99,255,0.4); }
+
+  .btn-danger {
+    background: rgba(255,101,132,0.15);
+    color: var(--accent2);
+    border: 1px solid rgba(255,101,132,0.3);
+  }
+  .btn-danger:hover:not(:disabled) { background: rgba(255,101,132,0.25); }
+
+  .btn-ghost {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+
+  .btn-success {
+    background: rgba(67,233,123,0.15);
+    color: var(--success);
+    border: 1px solid rgba(67,233,123,0.3);
+  }
+  .btn-success:hover:not(:disabled) { background: rgba(67,233,123,0.25); }
+
+  .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+  .btn-full { width: 100%; }
+
+  .btn-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  /* Spinner */
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Log panel */
+  .log-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    position: sticky;
+    top: 20px;
+  }
+
+  .log-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .log-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--accent3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dot-live {
+    width: 8px; height: 8px;
+    background: var(--success);
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .log-body {
+    padding: 12px;
+    height: 420px;
+    overflow-y: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+  }
+
+  .log-body::-webkit-scrollbar { width: 4px; }
+  .log-body::-webkit-scrollbar-track { background: transparent; }
+  .log-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .log-entry {
+    display: flex;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .log-time { color: var(--muted); flex-shrink: 0; font-size: 0.65rem; padding-top: 1px; }
+  .log-icon { flex-shrink: 0; }
+  .log-msg { color: var(--text); line-height: 1.4; word-break: break-all; }
+  .log-msg.success { color: var(--success); }
+  .log-msg.error { color: var(--error); }
+  .log-msg.info { color: var(--accent); }
+  .log-msg.warn { color: var(--warning); }
+
+  /* Quick seeds */
+  .quick-seeds {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .quick-seed-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Syne', sans-serif;
+    color: var(--text);
+  }
+
+  .quick-seed-btn:hover { border-color: var(--accent); background: rgba(108,99,255,0.05); }
+  .quick-seed-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .quick-seed-info { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+  .quick-seed-name { font-weight: 700; font-size: 0.88rem; }
+  .quick-seed-desc { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--muted); }
+
+  .quick-seed-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: rgba(108,99,255,0.15);
+    color: var(--accent);
+  }
+
+  /* Divider */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 16px 0;
+  }
+
+  /* Badge */
+  .badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 700;
+  }
+
+  .badge-purple { background: rgba(108,99,255,0.2); color: var(--accent); }
+  .badge-pink { background: rgba(255,101,132,0.2); color: var(--accent2); }
+  .badge-green { background: rgba(67,233,123,0.2); color: var(--success); }
+
+  /* Progress */
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  /* Token display */
+  .token-display {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--success);
+    word-break: break-all;
+    line-height: 1.5;
+    max-height: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .alert {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    margin-bottom: 14px;
+  }
+
+  .alert-info { background: rgba(108,99,255,0.1); border: 1px solid rgba(108,99,255,0.2); color: #a0a0ff; }
+  .alert-success { background: rgba(67,233,123,0.1); border: 1px solid rgba(67,233,123,0.2); color: var(--success); }
+  .alert-error { background: rgba(255,101,132,0.1); border: 1px solid rgba(255,101,132,0.2); color: var(--error); }
+
+  @media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(3, 1fr); }
+    .log-panel { position: static; }
+    .log-body { height: 260px; }
+    header { flex-direction: column; gap: 16px; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">✈️</div>
+      <div>
+        <h1>Travel<span>Book</span> Seeder</h1>
+        <div class="subtitle">// API DATA POPULATION TOOL v1.0</div>
+      </div>
+    </div>
+    <div class="config-bar">
+      <label>API_URL →</label>
+      <input type="text" id="apiUrl" value="http://localhost:3000" placeholder="http://localhost:3000" />
+      <button class="btn btn-ghost btn-sm" onclick="testConnection()">Ping</button>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card" id="stat-users">
+      <div class="stat-value" id="cnt-users">0</div>
+      <div class="stat-label">👤 Users</div>
+    </div>
+    <div class="stat-card" id="stat-hotels">
+      <div class="stat-value" id="cnt-hotels">0</div>
+      <div class="stat-label">🏨 Hotels</div>
+    </div>
+    <div class="stat-card" id="stat-rooms">
+      <div class="stat-value" id="cnt-rooms">0</div>
+      <div class="stat-label">🛏 Rooms</div>
+    </div>
+    <div class="stat-card" id="stat-travels">
+      <div class="stat-value" id="cnt-travels">0</div>
+      <div class="stat-label">✈️ Travels</div>
+    </div>
+    <div class="stat-card" id="stat-bookings">
+      <div class="stat-value" id="cnt-bookings">0</div>
+      <div class="stat-label">📋 Bookings</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <div class="left-col">
+
+      <!-- AUTH -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="section-icon icon-purple">🔐</div>
+            Авторизація
+          </div>
+          <div id="auth-status"></div>
+        </div>
+        <div class="section-body">
+          <div id="token-area" style="display:none">
+            <div class="alert alert-success">✓ Авторизовано! Токен збережено.</div>
+            <div class="token-display" id="token-preview"></div>
+            <div class="btn-actions">
+              <button class="btn btn-danger btn-sm" onclick="clearToken()">Вийти</button>
+            </div>
+          </div>
+          <div id="auth-forms">
+            <div class="field-group">
+              <div class="field-row">
+                <div class="field">
+                  <label class="field-label">Email</label>
+                  <input type="email" id="auth-email" value="admin@travel.com" />
+                </div>
+                <div class="field">
+                  <label class="field-label">Пароль</label>
+                  <input type="password" id="auth-password" value="admin123" />
+                </div>
+              </div>
+            </div>
+            <div class="btn-actions">
+              <button class="btn btn-primary" onclick="doLogin()">
+                <span>Увійти</span>
+              </button>
+              <button class="btn btn-ghost" onclick="doRegister()">
+                Зареєструватись
+              </button>
+            </div>
+            <hr class="divider">
+            <div class="field-group">
+              <div class="field-row-3">
+                <div class="field">
+                  <label class="field-label">Ім'я</label>
+                  <input type="text" id="reg-first" value="Адмін" />
+                </div>
+                <div class="field">
+                  <label class="field-label">Прізвище</label>
+                  <input type="text" id="reg-last" value="Тестовий" />
+                </div>
+                <div class="field">
+                  <label class="field-label">Телефон</label>
+                  <input type="text" id="reg-phone" value="+380501234567" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HOTELS -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="section-icon icon-pink">🏨</div>
+            Готелі
+          </div>
+          <span class="badge badge-pink">Потребує токен</span>
+        </div>
+        <div class="section-body">
+          <div class="field-group">
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label">Назва</label>
+                <input type="text" id="hotel-name" value="Grand Hotel Kyiv" />
+              </div>
+              <div class="field">
+                <label class="field-label">Місто</label>
+                <input type="text" id="hotel-location" value="Київ, Україна" />
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label">Адреса</label>
+              <input type="text" id="hotel-address" value="вул. Хрещатик, 22" />
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label">Рейтинг (0–5)</label>
+                <input type="number" id="hotel-rating" value="4.5" min="0" max="5" step="0.1" />
+              </div>
+              <div class="field">
+                <label class="field-label">Опис</label>
+                <input type="text" id="hotel-desc" value="Розкішний готель у центрі міста" />
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label">Зручності (Enter — додати)</label>
+              <div class="tags-container" onclick="focusTags()" id="amenities-container">
+                <input class="tags-input" id="amenities-input" placeholder="WiFi, Басейн..." onkeydown="addTag(event)" />
+              </div>
+            </div>
+          </div>
+          <div class="btn-actions">
+            <button class="btn btn-primary" onclick="createHotel()">+ Додати готель</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROOMS -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="section-icon icon-green">🛏</div>
+            Кімнати
+          </div>
+          <span class="badge badge-green">Потребує готель</span>
+        </div>
+        <div class="section-body">
+          <div class="field-group">
+            <div class="field">
+              <label class="field-label">Готель</label>
+              <select id="room-hotel">
+                <option value="">— Спочатку створіть готель —</option>
+              </select>
+            </div>
+            <div class="field-row-3">
+              <div class="field">
+                <label class="field-label">Тип кімнати</label>
+                <select id="room-type">
+                  <option value="SINGLE">SINGLE</option>
+                  <option value="DOUBLE" selected>DOUBLE</option>
+                  <option value="SUITE">SUITE</option>
+                  <option value="DELUXE">DELUXE</option>
+                  <option value="FAMILY">FAMILY</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label">Ціна/ніч (₴)</label>
+                <input type="number" id="room-price" value="1500" />
+              </div>
+              <div class="field">
+                <label class="field-label">Місткість</label>
+                <input type="number" id="room-capacity" value="2" min="1" />
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label">Опис</label>
+              <input type="text" id="room-desc" value="Просторий номер з видом на місто" />
+            </div>
+          </div>
+          <div class="btn-actions">
+            <button class="btn btn-primary" onclick="createRoom()">+ Додати кімнату</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRAVELS -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="section-icon icon-yellow">✈️</div>
+            Подорожі
+          </div>
+          <span class="badge badge-purple">Потребує токен</span>
+        </div>
+        <div class="section-body">
+          <div class="field-group">
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label">Напрямок</label>
+                <input type="text" id="travel-dest" value="Париж, Франція" />
+              </div>
+              <div class="field">
+                <label class="field-label">Статус</label>
+                <select id="travel-status">
+                  <option value="PLANNED" selected>PLANNED</option>
+                  <option value="ONGOING">ONGOING</option>
+                  <option value="COMPLETED">COMPLETED</option>
+                  <option value="CANCELLED">CANCELLED</option>
+                </select>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label">Початок</label>
+                <input type="date" id="travel-start" />
+              </div>
+              <div class="field">
+                <label class="field-label">Кінець</label>
+                <input type="date" id="travel-end" />
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label">Опис</label>
+              <input type="text" id="travel-desc" value="Романтична поїздка до Парижу" />
+            </div>
+          </div>
+          <div class="btn-actions">
+            <button class="btn btn-primary" onclick="createTravel()">+ Додати подорож</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOOKINGS -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="section-icon icon-blue">📋</div>
+            Бронювання
+          </div>
+          <span class="badge badge-pink">Потребує готель + кімната</span>
+        </div>
+        <div class="section-body">
+          <div class="field-group">
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label">Готель</label>
+                <select id="booking-hotel" onchange="updateBookingRooms()">
+                  <option value="">— Оберіть готель —</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label">Кімната</label>
+                <select id="booking-room">
+                  <option value="">— Спочатку оберіть готель —</option>
+                </select>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label">Заїзд</label>
+                <input type="date" id="booking-checkin" />
+              </div>
+              <div class="field">
+                <label class="field-label">Виїзд</label>
+                <input type="date" id="booking-checkout" />
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label">Гостей</label>
+                <input type="number" id="booking-guests" value="2" min="1" />
+              </div>
+              <div class="field">
+                <label class="field-label">Подорож (необов'язково)</label>
+                <select id="booking-travel">
+                  <option value="">— Без подорожі —</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label">Побажання</label>
+              <input type="text" id="booking-requests" value="Номер на високому поверсі" />
+            </div>
+          </div>
+          <div class="btn-actions">
+            <button class="btn btn-primary" onclick="createBooking()">+ Додати бронювання</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Log + Quick Seed -->
+    <div class="right-col">
+      
+      <!-- Quick Seed -->
+      <div class="section" style="margin-bottom:20px">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="section-icon icon-purple">⚡</div>
+            Швидке заповнення
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="alert alert-info" style="font-size:0.78rem">
+            Автоматично створить всі тестові дані одним кліком. Потрібна авторизація.
+          </div>
+          <div id="seed-progress" style="display:none">
+            <div style="font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--muted)" id="seed-step">Готую...</div>
+            <div class="progress-bar"><div class="progress-fill" id="seed-bar" style="width:0%"></div></div>
+          </div>
+          <div class="quick-seeds">
+            <button class="quick-seed-btn" onclick="seedAll()" id="btn-seed-all">
+              <div class="quick-seed-info">
+                <div class="quick-seed-name">🚀 Все одразу</div>
+                <div class="quick-seed-desc">2 готелі · 6 кімнат · 2 подорожі · 3 бронювання</div>
+              </div>
+              <div class="quick-seed-badge">Full</div>
+            </button>
+            <button class="quick-seed-btn" onclick="seedHotels()" id="btn-seed-hotels">
+              <div class="quick-seed-info">
+                <div class="quick-seed-name">🏨 Тільки готелі</div>
+                <div class="quick-seed-desc">3 готелі з кімнатами</div>
+              </div>
+              <div class="quick-seed-badge">Hotels</div>
+            </button>
+            <button class="quick-seed-btn" onclick="seedTravels()" id="btn-seed-travels">
+              <div class="quick-seed-info">
+                <div class="quick-seed-name">✈️ Тільки подорожі</div>
+                <div class="quick-seed-desc">3 подорожі різних статусів</div>
+              </div>
+              <div class="quick-seed-badge">Travels</div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Log -->
+      <div class="log-panel">
+        <div class="log-header">
+          <div class="log-title">
+            <div class="dot-live"></div>
+            LIVE LOG
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="clearLog()">Clear</button>
+        </div>
+        <div class="log-body" id="log-body">
+          <div class="log-entry">
+            <span class="log-time">--:--:--</span>
+            <span class="log-icon">💡</span>
+            <span class="log-msg info">Seeder готовий. Налаштуйте API URL та авторизуйтесь.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────
+const state = {
+  token: localStorage.getItem('seeder_token') || null,
+  hotels: [],
+  rooms: {},
+  travels: [],
+  counts: { users: 0, hotels: 0, rooms: 0, travels: 0, bookings: 0 },
+  amenities: [],
+};
+
+// ─── Init ─────────────────────────────────────────────────────────
+window.onload = () => {
+  // Default dates
+  const today = new Date();
+  const next7 = new Date(today); next7.setDate(today.getDate() + 7);
+  const next14 = new Date(today); next14.setDate(today.getDate() + 14);
+  const next30 = new Date(today); next30.setDate(today.getDate() + 30);
+  const next37 = new Date(today); next37.setDate(today.getDate() + 37);
+
+  document.getElementById('travel-start').value = fmt(next7);
+  document.getElementById('travel-end').value = fmt(next14);
+  document.getElementById('booking-checkin').value = fmt(next7);
+  document.getElementById('booking-checkout').value = fmt(next14);
+
+  // Default amenities
+  ['WiFi', 'Ресторан', 'Спортзал'].forEach(a => addAmenityTag(a));
+
+  if (state.token) showTokenUI(state.token);
+
+  log('info', '💡', 'Seeder готовий. Налаштуйте API URL та авторизуйтесь.');
+};
+
+function fmt(d) {
+  return d.toISOString().split('T')[0];
+}
+
+// ─── API ──────────────────────────────────────────────────────────
+function getUrl() { return document.getElementById('apiUrl').value.replace(/\/$/, ''); }
+
+async function api(method, path, body = null, auth = true) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (auth && state.token) headers['Authorization'] = `Bearer ${state.token}`;
+  const res = await fetch(getUrl() + path, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : null,
+  });
+  const text = await res.text();
+  let data;
+  try { data = JSON.parse(text); } catch { data = text; }
+  if (!res.ok) throw new Error(data?.message || data || `HTTP ${res.status}`);
+  return data;
+}
+
+// ─── Log ──────────────────────────────────────────────────────────
+function log(type, icon, msg) {
+  const body = document.getElementById('log-body');
+  const time = new Date().toLocaleTimeString('uk');
+  const el = document.createElement('div');
+  el.className = 'log-entry';
+  el.innerHTML = `<span class="log-time">${time}</span><span class="log-icon">${icon}</span><span class="log-msg ${type}">${msg}</span>`;
+  body.appendChild(el);
+  body.scrollTop = body.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById('log-body').innerHTML = '';
+  log('info', '🗑️', 'Лог очищено');
+}
+
+// ─── Stats ────────────────────────────────────────────────────────
+function incCount(key) {
+  state.counts[key]++;
+  document.getElementById(`cnt-${key}`).textContent = state.counts[key];
+  document.getElementById(`stat-${key}`).classList.add('active');
+  setTimeout(() => document.getElementById(`stat-${key}`).classList.remove('active'), 600);
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────
+async function testConnection() {
+  try {
+    await fetch(getUrl() + '/hotels?limit=1');
+    log('success', '✅', `З'єднання з ${getUrl()} успішне`);
+  } catch(e) {
+    log('error', '❌', `Не вдалось підключитись: ${e.message}`);
+  }
+}
+
+async function doLogin() {
+  const email = document.getElementById('auth-email').value;
+  const password = document.getElementById('auth-password').value;
+  try {
+    log('info', '🔑', `Входжу як ${email}...`);
+    const res = await api('POST', '/auth/login', { email, password }, false);
+    state.token = res.access_token;
+    localStorage.setItem('seeder_token', state.token);
+    showTokenUI(state.token);
+    log('success', '✅', `Авторизовано! Користувач: ${res.user.firstName} ${res.user.lastName}`);
+    incCount('users');
+    await loadData();
+  } catch(e) {
+    log('error', '❌', `Помилка входу: ${e.message}`);
+  }
+}
+
+async function doRegister() {
+  const email = document.getElementById('auth-email').value;
+  const password = document.getElementById('auth-password').value;
+  const firstName = document.getElementById('reg-first').value;
+  const lastName = document.getElementById('reg-last').value;
+  const phone = document.getElementById('reg-phone').value;
+  try {
+    log('info', '📝', `Реєструю ${email}...`);
+    await api('POST', '/auth/register', { email, password, firstName, lastName, phone }, false);
+    log('success', '✅', `Зареєстровано! Тепер входжу...`);
+    await doLogin();
+  } catch(e) {
+    log('error', '❌', `Помилка реєстрації: ${e.message}`);
+  }
+}
+
+function showTokenUI(token) {
+  document.getElementById('token-area').style.display = 'block';
+  document.getElementById('auth-forms').style.display = 'none';
+  document.getElementById('token-preview').textContent = token.substring(0, 120) + '...';
+  document.getElementById('auth-status').innerHTML = '<span class="badge badge-green">● Активний</span>';
+}
+
+function clearToken() {
+  state.token = null;
+  localStorage.removeItem('seeder_token');
+  document.getElementById('token-area').style.display = 'none';
+  document.getElementById('auth-forms').style.display = 'block';
+  document.getElementById('auth-status').innerHTML = '';
+  log('warn', '🚪', 'Токен видалено');
+}
+
+// ─── Load existing data ───────────────────────────────────────────
+async function loadData() {
+  try {
+    const hotels = await api('GET', '/hotels?limit=50', null, false);
+    state.hotels = hotels.data || [];
+    state.counts.hotels = state.hotels.length;
+    document.getElementById('cnt-hotels').textContent = state.counts.hotels;
+
+    let totalRooms = 0;
+    for (const h of state.hotels) {
+      const rooms = await api('GET', `/rooms?hotelId=${h.id}`, null, false);
+      state.rooms[h.id] = rooms;
+      totalRooms += rooms.length;
+    }
+    state.counts.rooms = totalRooms;
+    document.getElementById('cnt-rooms').textContent = totalRooms;
+
+    if (state.token) {
+      const travels = await api('GET', '/travels');
+      state.travels = travels;
+      state.counts.travels = travels.length;
+      document.getElementById('cnt-travels').textContent = travels.length;
+
+      const bookings = await api('GET', '/bookings');
+      state.counts.bookings = bookings.length;
+      document.getElementById('cnt-bookings').textContent = bookings.length;
+    }
+
+    updateSelects();
+    log('info', '📥', `Завантажено: ${state.hotels.length} готелів, ${totalRooms} кімнат, ${state.travels.length} подорожей`);
+  } catch(e) {
+    log('warn', '⚠️', `Не вдалось завантажити дані: ${e.message}`);
+  }
+}
+
+function updateSelects() {
+  const hotelOpts = state.hotels.map(h => `<option value="${h.id}">${h.name} (${h.location})</option>`).join('');
+  const emptyHotel = '<option value="">— Оберіть готель —</option>';
+
+  document.getElementById('room-hotel').innerHTML = hotelOpts || '<option value="">— Немає готелів —</option>';
+  document.getElementById('booking-hotel').innerHTML = emptyHotel + hotelOpts;
+
+  const travelOpts = state.travels.map(t => `<option value="${t.id}">${t.destination}</option>`).join('');
+  document.getElementById('booking-travel').innerHTML = '<option value="">— Без подорожі —</option>' + travelOpts;
+}
+
+async function updateBookingRooms() {
+  const hotelId = document.getElementById('booking-hotel').value;
+  if (!hotelId) return;
+  const rooms = state.rooms[hotelId] || await api('GET', `/rooms?hotelId=${hotelId}`, null, false);
+  state.rooms[hotelId] = rooms;
+  document.getElementById('booking-room').innerHTML =
+    rooms.filter(r => r.available).map(r =>
+      `<option value="${r.id}">${r.roomType} — ${r.pricePerNight}₴/ніч (до ${r.capacity} ос.)</option>`
+    ).join('') || '<option value="">— Немає вільних кімнат —</option>';
+}
+
+// ─── Tags (amenities) ─────────────────────────────────────────────
+function focusTags() { document.getElementById('amenities-input').focus(); }
+
+function addTag(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const val = e.target.value.trim().replace(',', '');
+    if (val && !state.amenities.includes(val)) {
+      addAmenityTag(val);
+    }
+    e.target.value = '';
+  }
+}
+
+function addAmenityTag(val) {
+  state.amenities.push(val);
+  const container = document.getElementById('amenities-container');
+  const input = document.getElementById('amenities-input');
+  const tag = document.createElement('div');
+  tag.className = 'tag';
+  tag.innerHTML = `${val}<span class="tag-remove" onclick="removeTag(this,'${val}')">×</span>`;
+  container.insertBefore(tag, input);
+}
+
+function removeTag(el, val) {
+  state.amenities = state.amenities.filter(a => a !== val);
+  el.parentElement.remove();
+}
+
+// ─── Create Hotel ─────────────────────────────────────────────────
+async function createHotel() {
+  if (!state.token) { log('error', '❌', 'Потрібна авторизація!'); return; }
+  const data = {
+    name: document.getElementById('hotel-name').value,
+    location: document.getElementById('hotel-location').value,
+    address: document.getElementById('hotel-address').value,
+    rating: parseFloat(document.getElementById('hotel-rating').value),
+    description: document.getElementById('hotel-desc').value,
+    amenities: [...state.amenities],
+  };
+  if (!data.name || !data.location || !data.address) { log('error', '❌', 'Заповніть всі поля готелю!'); return; }
+  try {
+    const hotel = await api('POST', '/hotels', data);
+    state.hotels.push(hotel);
+    state.rooms[hotel.id] = [];
+    updateSelects();
+    incCount('hotels');
+    log('success', '🏨', `Готель "${hotel.name}" створено! ID: ${hotel.id.split('-')[0]}`);
+  } catch(e) {
+    log('error', '❌', `Помилка: ${e.message}`);
+  }
+}
+
+// ─── Create Room ──────────────────────────────────────────────────
+async function createRoom() {
+  if (!state.token) { log('error', '❌', 'Потрібна авторизація!'); return; }
+  const hotelId = document.getElementById('room-hotel').value;
+  if (!hotelId) { log('error', '❌', 'Оберіть готель!'); return; }
+  const data = {
+    hotelId,
+    roomType: document.getElementById('room-type').value,
+    pricePerNight: parseFloat(document.getElementById('room-price').value),
+    capacity: parseInt(document.getElementById('room-capacity').value),
+    description: document.getElementById('room-desc').value,
+    available: true,
+  };
+  try {
+    const room = await api('POST', '/rooms', data);
+    if (!state.rooms[hotelId]) state.rooms[hotelId] = [];
+    state.rooms[hotelId].push(room);
+    incCount('rooms');
+    const hotelName = state.hotels.find(h => h.id === hotelId)?.name || hotelId;
+    log('success', '🛏', `Кімната ${room.roomType} (${room.pricePerNight}₴/ніч) → "${hotelName}"`);
+  } catch(e) {
+    log('error', '❌', `Помилка: ${e.message}`);
+  }
+}
+
+// ─── Create Travel ────────────────────────────────────────────────
+async function createTravel() {
+  if (!state.token) { log('error', '❌', 'Потрібна авторизація!'); return; }
+  const data = {
+    destination: document.getElementById('travel-dest').value,
+    startDate: new Date(document.getElementById('travel-start').value).toISOString(),
+    endDate: new Date(document.getElementById('travel-end').value).toISOString(),
+    description: document.getElementById('travel-desc').value,
+    status: document.getElementById('travel-status').value,
+  };
+  if (!data.destination) { log('error', '❌', 'Вкажіть напрямок!'); return; }
+  try {
+    const travel = await api('POST', '/travels', data);
+    state.travels.push(travel);
+    updateSelects();
+    incCount('travels');
+    log('success', '✈️', `Подорож "${travel.destination}" створено!`);
+  } catch(e) {
+    log('error', '❌', `Помилка: ${e.message}`);
+  }
+}
+
+// ─── Create Booking ───────────────────────────────────────────────
+async function createBooking() {
+  if (!state.token) { log('error', '❌', 'Потрібна авторизація!'); return; }
+  const hotelId = document.getElementById('booking-hotel').value;
+  const roomId = document.getElementById('booking-room').value;
+  if (!hotelId || !roomId) { log('error', '❌', 'Оберіть готель та кімнату!'); return; }
+  const travelId = document.getElementById('booking-travel').value;
+  const data = {
+    hotelId,
+    roomId,
+    checkInDate: new Date(document.getElementById('booking-checkin').value).toISOString(),
+    checkOutDate: new Date(document.getElementById('booking-checkout').value).toISOString(),
+    guestsCount: parseInt(document.getElementById('booking-guests').value),
+    specialRequests: document.getElementById('booking-requests').value,
+    ...(travelId ? { travelId } : {}),
+  };
+  try {
+    const booking = await api('POST', '/bookings', data);
+    incCount('bookings');
+    log('success', '📋', `Бронювання #${booking.bookingNumber.split('-')[0]} створено! ${booking.totalPrice}₴`);
+  } catch(e) {
+    log('error', '❌', `Помилка: ${e.message}`);
+  }
+}
+
+// ─── Quick Seed ───────────────────────────────────────────────────
+function setSeedProgress(step, pct) {
+  document.getElementById('seed-progress').style.display = 'block';
+  document.getElementById('seed-step').textContent = step;
+  document.getElementById('seed-bar').style.width = pct + '%';
+}
+
+async function seedHotels() {
+  if (!state.token) { log('error', '❌', 'Потрібна авторизація!'); return; }
+  setSeeding(true);
+  const hotels = [
+    { name: 'Grand Hotel Kyiv', location: 'Київ, Україна', address: 'вул. Хрещатик, 22', rating: 4.8, description: 'Флагманський готель у серці столиці', amenities: ['WiFi', 'Ресторан', 'Басейн', 'Спортзал', 'Конференц-зал'] },
+    { name: 'Lviv Palace Hotel', location: 'Львів, Україна', address: 'пл. Ринок, 14', rating: 4.6, description: 'Бутик-готель у старовинному палаці', amenities: ['WiFi', 'Ресторан', 'Спа', 'Бар'] },
+    { name: 'Odesa Beach Resort', location: 'Одеса, Україна', address: 'Аркадія, Гагарінське плато, 5', rating: 4.3, description: 'Курортний готель на Чорноморському узбережжі', amenities: ['WiFi', 'Пляж', 'Басейн', 'Ресторан', 'Аква-парк'] },
+  ];
+  const roomTemplates = [
+    { roomType: 'SINGLE', pricePerNight: 1200, capacity: 1, description: 'Затишний одномісний номер' },
+    { roomType: 'DOUBLE', pricePerNight: 1800, capacity: 2, description: 'Стандартний двомісний номер' },
+    { roomType: 'SUITE', pricePerNight: 4500, capacity: 3, description: 'Люксовий номер з панорамним видом' },
+  ];
+
+  try {
+    for (let i = 0; i < hotels.length; i++) {
+      setSeedProgress(`Створюю готель "${hotels[i].name}"...`, (i / hotels.length) * 60);
+      const hotel = await api('POST', '/hotels', hotels[i]);
+      state.hotels.push(hotel);
+      state.rooms[hotel.id] = [];
+      incCount('hotels');
+      log('success', '🏨', `"${hotel.name}" — готово`);
+
+      for (const rt of roomTemplates) {
+        const room = await api('POST', '/rooms', { ...rt, hotelId: hotel.id });
+        state.rooms[hotel.id].push(room);
+        incCount('rooms');
+        log('success', '🛏', `  └ ${room.roomType} ${room.pricePerNight}₴/ніч`);
+        await sleep(100);
+      }
+      await sleep(150);
+    }
+    updateSelects();
+    setSeedProgress('✅ Готелі заповнено!', 100);
+    log('success', '🎉', `Створено ${hotels.length} готелів та ${hotels.length * roomTemplates.length} кімнат`);
+  } catch(e) {
+    log('error', '❌', `Помилка: ${e.message}`);
+  }
+  setSeeding(false);
+  setTimeout(() => document.getElementById('seed-progress').style.display = 'none', 2000);
+}
+
+async function seedTravels() {
+  if (!state.token) { log('error', '❌', 'Потрібна авторизація!'); return; }
+  setSeeding(true);
+  const today = new Date();
+  const travels = [
+    { destination: 'Париж, Франція', startDate: offsetDate(today, 7), endDate: offsetDate(today, 14), description: 'Романтична поїздка до Парижу', status: 'PLANNED' },
+    { destination: 'Барселона, Іспанія', startDate: offsetDate(today, -30), endDate: offsetDate(today, -23), description: 'Культурна подорож до Барселони', status: 'COMPLETED' },
+    { destination: 'Берлін, Німеччина', startDate: offsetDate(today, 30), endDate: offsetDate(today, 37), description: 'Ділова поїздка до Берліна', status: 'PLANNED' },
+  ];
+  try {
+    for (let i = 0; i < travels.length; i++) {
+      setSeedProgress(`Створюю подорож "${travels[i].destination}"...`, (i / travels.length) * 100);
+      const travel = await api('POST', '/travels', travels[i]);
+      state.travels.push(travel);
+      incCount('travels');
+      log('success', '✈️', `"${travel.destination}" [${travel.status}]`);
+      await sleep(200);
+    }
+    updateSelects();
+    setSeedProgress('✅ Подорожі заповнено!', 100);
+    log('success', '🎉', `Створено ${travels.length} подорожей`);
+  } catch(e) {
+    log('error', '❌', `Помилка: ${e.message}`);
+  }
+  setSeeding(false);
+  setTimeout(() => document.getElementById('seed-progress').style.display = 'none', 2000);
+}
+
+async function seedAll() {
+  if (!state.token) { log('error', '❌', 'Потрібна авторизація!'); return; }
+  setSeeding(true);
+  log('info', '🚀', '=== Починаю повне заповнення бази даних ===');
+
+  // 1. Hotels
+  setSeedProgress('Крок 1/3: Готелі...', 5);
+  const hotelsData = [
+    { name: 'Grand Hotel Kyiv', location: 'Київ, Україна', address: 'вул. Хрещатик, 22', rating: 4.8, description: 'Флагманський готель у серці столиці', amenities: ['WiFi', 'Ресторан', 'Басейн', 'Спортзал'] },
+    { name: 'Carpathian Chalet', location: 'Буковель, Україна', address: 'с. Поляниця, вул. Гірська, 1', rating: 4.7, description: 'Гірський готель у Карпатах', amenities: ['WiFi', 'Лижна база', 'Spa', 'Ресторан', 'Тераса'] },
+  ];
+  const createdHotels = [];
+  for (const h of hotelsData) {
+    const hotel = await api('POST', '/hotels', h);
+    createdHotels.push(hotel);
+    state.hotels.push(hotel);
+    state.rooms[hotel.id] = [];
+    incCount('hotels');
+    log('success', '🏨', `"${hotel.name}"`);
+    await sleep(100);
+  }
+
+  // 2. Rooms
+  setSeedProgress('Крок 2/3: Кімнати...', 30);
+  const roomSets = [
+    [
+      { roomType: 'SINGLE', pricePerNight: 1200, capacity: 1, description: 'Стандартний одномісний' },
+      { roomType: 'DOUBLE', pricePerNight: 1800, capacity: 2, description: 'Стандартний двомісний' },
+      { roomType: 'SUITE', pricePerNight: 4500, capacity: 3, description: 'Представницький люкс' },
+    ],
+    [
+      { roomType: 'DOUBLE', pricePerNight: 2200, capacity: 2, description: 'Затишний гірський номер' },
+      { roomType: 'FAMILY', pricePerNight: 3200, capacity: 4, description: 'Сімейний шале' },
+      { roomType: 'DELUXE', pricePerNight: 5500, capacity: 2, description: 'Делюкс з видом на гори' },
+    ],
+  ];
+  for (let i = 0; i < createdHotels.length; i++) {
+    for (const rt of roomSets[i]) {
+      const room = await api('POST', '/rooms', { ...rt, hotelId: createdHotels[i].id });
+      state.rooms[createdHotels[i].id].push(room);
+      incCount('rooms');
+      log('success', '🛏', `  ${room.roomType} → ${createdHotels[i].name}`);
+      await sleep(80);
+    }
+  }
+
+  // 3. Travels
+  setSeedProgress('Крок 3/3: Подорожі та бронювання...', 60);
+  const today = new Date();
+  const travelsData = [
+    { destination: 'Відпочинок у Карпатах', startDate: offsetDate(today, 14), endDate: offsetDate(today, 21), description: 'Зимовий відпочинок', status: 'PLANNED' },
+    { destination: 'Київ — бізнес тур', startDate: offsetDate(today, 3), endDate: offsetDate(today, 5), description: 'Ділова поїздка', status: 'PLANNED' },
+  ];
+  const createdTravels = [];
+  for (const t of travelsData) {
+    const travel = await api('POST', '/travels', t);
+    createdTravels.push(travel);
+    state.travels.push(travel);
+    incCount('travels');
+    log('success', '✈️', `"${travel.destination}"`);
+    await sleep(100);
+  }
+
+  // 4. Bookings
+  setSeedProgress('Фінал: Бронювання...', 80);
+  const bookingsData = [
+    {
+      hotelId: createdHotels[0].id,
+      roomId: state.rooms[createdHotels[0].id][1]?.id,
+      checkInDate: offsetDate(today, 3),
+      checkOutDate: offsetDate(today, 5),
+      guestsCount: 2,
+      travelId: createdTravels[1].id,
+      specialRequests: 'Номер на вищому поверсі',
+    },
+    {
+      hotelId: createdHotels[1].id,
+      roomId: state.rooms[createdHotels[1].id][1]?.id,
+      checkInDate: offsetDate(today, 14),
+      checkOutDate: offsetDate(today, 18),
+      guestsCount: 2,
+      travelId: createdTravels[0].id,
+      specialRequests: 'Вид на гори, побудка о 7:00',
+    },
+    {
+      hotelId: createdHotels[0].id,
+      roomId: state.rooms[createdHotels[0].id][0]?.id,
+      checkInDate: offsetDate(today, 30),
+      checkOutDate: offsetDate(today, 32),
+      guestsCount: 1,
+      specialRequests: '',
+    },
+  ];
+  for (const b of bookingsData) {
+    if (!b.roomId) continue;
+    const booking = await api('POST', '/bookings', b);
+    incCount('bookings');
+    log('success', '📋', `Бронювання ${booking.totalPrice}₴ → ${state.hotels.find(h=>h.id===b.hotelId)?.name}`);
+    await sleep(150);
+  }
+
+  updateSelects();
+  setSeedProgress('✅ Базу даних заповнено!', 100);
+  log('success', '🎉', '=== ГОТОВО! База даних успішно заповнена ===');
+  setSeeding(false);
+  setTimeout(() => document.getElementById('seed-progress').style.display = 'none', 3000);
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function offsetDate(base, days) {
+  const d = new Date(base);
+  d.setDate(d.getDate() + days);
+  return d.toISOString();
+}
+
+function setSeeding(val) {
+  ['btn-seed-all', 'btn-seed-hotels', 'btn-seed-travels'].forEach(id => {
+    document.getElementById(id).disabled = val;
+  });
+}
+</script>
+</body>
+</html>
