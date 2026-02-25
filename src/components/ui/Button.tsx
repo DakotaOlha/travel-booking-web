@@ -1,5 +1,5 @@
-import { ButtonHTMLAttributes } from 'react';
-import { clsx } from 'clsx'; // npm install clsx
+import { type ButtonHTMLAttributes } from 'react';
+import { clsx } from 'clsx';
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
 type Size = 'sm' | 'md' | 'lg';

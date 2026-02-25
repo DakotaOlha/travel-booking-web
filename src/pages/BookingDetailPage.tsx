@@ -96,7 +96,7 @@ export function BookingDetailPage() {
             </Button>
           )}
           {booking.status === 'CANCELLED' && (
-            <Button variant="danger" variant="ghost" loading={deleteMutation.isPending}
+            <Button variant="ghost" loading={deleteMutation.isPending}
               onClick={() => { if (confirm('Видалити?')) deleteMutation.mutate(); }}>
               Видалити
             </Button>
